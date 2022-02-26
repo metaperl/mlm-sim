@@ -1,0 +1,118 @@
+I have implemented a simulation where I observe the growth of a
+recruiting network where the default strategy is:
+
+    each marketer recruits 1 person per month directly until they
+    reach 5 recruits, at which point, they no longer recruit any one.
+
+The initial state of the simulation is 1 marketer with 0 recruits.
+
+After 1 month, the 1 marketer recruits 1 person so the expected state
+of the simulation is:
+
+* the first marketer has 1 recruit
+* the second marketer has 0 recruits
+
+However, the output from my simulation shows the second marketer as
+also having 1 recruit. But examining the output closer, the second
+marketer has itself as a recruit. i.e, both the first marketer and the
+second marketer have the second marketer as their first recruit:
+
+```
+c:\programming\mlm-sim>python mlm-sim.py 
+python mlm-sim.py 
+Month 0: Total marketers 1.
+Marketer 1 has sponsored the following 0 marketers: []
+
+	Recruiting complete. Updated status for month: Total marketers 2.
+Marketer 1 has sponsored the following 1 marketers: [Marketer(front_line=[...], front_line_target=5, id=2, name='Marketer00004', sponsor=[])]
+Marketer 2 has sponsored the following 1 marketers: [Marketer(front_line=[...], front_line_target=5, id=2, name='Marketer00004', sponsor=[])]
+
+Month 1: Total marketers 2.
+Marketer 1 has sponsored the following 1 marketers: [Marketer(front_line=[...], front_line_target=5, id=2, name='Marketer00004', sponsor=[])]
+Marketer 2 has sponsored the following 1 marketers: [Marketer(front_line=[...], front_line_target=5, id=2, name='Marketer00004', sponsor=[])]
+```
+
+It seems that the `front_line` attribute that is added after the class
+is defined is not unique amount `Marketer` instances for some reason
+even though I used the `instantiate=True` keyword to enforce this.
+
+Code follows:
+
+```
+import itertools
+
+from param import Parameterized, Number, List, ClassSelector
+
+marketer_id = itertools.count(1)
+
+
+class Marketer(Parameterized):
+    id = Number()
+    front_line_target = Number(5)
+
+    def __init__(self, **params):
+        super().__init__(**params)
+        self.id = next(marketer_id)
+
+    @property
+    def sponsoring_goals_met(self):
+        return len(self.front_line) == self.front_line_target
+
+    @classmethod
+    def recruiting_strategy(cls):
+        """Employ a strategy to recruit new marketers.
+
+        Default algorithm recruits 1 new marketer.
+        """
+        new_marketer = Marketer()
+        return list([new_marketer])
+
+    def recruit(self):
+        if self.sponsoring_goals_met:
+            return list([])
+        else:
+            new_marketers = self.recruiting_strategy()
+            self.front_line.extend(new_marketers)
+            return new_marketers
+
+    def __str__(self):
+        return f"Marketer {self.id} has sponsored the following {len(self.front_line)} marketers: {self.front_line}"
+
+
+Marketer.param.add_parameter('sponsor', List([], item_type=Marketer, instantiate=True))
+Marketer.param.add_parameter('front_line', List([], item_type=Marketer, instantiate=True))
+
+
+class Network(Parameterized):
+    marketers = List([], item_type=Marketer, instantiate=True)
+
+    def recruit(self):
+        new_marketers = list([])
+        for marketer in self.marketers:
+            new_marketers.extend(marketer.recruit())
+        self.marketers.extend(new_marketers)
+
+    def __str__(self):
+        result = f"Total marketers {len(self.marketers)}.\n"
+        for marketer in self.marketers:
+            result = result + str(marketer) + "\n"
+        return result
+
+
+def main(months=3):
+    network = Network()
+    network.marketers.append(Marketer())
+
+    for month in range(months):
+        print(f"Month {month}: {network}")
+
+        network.recruit()
+
+        print(f"\tRecruiting complete. Updated status for month: {network}")
+
+
+if __name__ == '__main__':
+    main()
+
+
+```

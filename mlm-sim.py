@@ -25,7 +25,8 @@ class Marketer(Parameterized):
     def sponsoring_goals_met(self):
         return len(self.front_line) == self.front_line_target
 
-    def recruiting_strategy(self):
+    @staticmethod
+    def recruiting_strategy():
         """Employ a strategy to recruit new marketers.
 
         Default algorithm recruits 1 new marketer.
