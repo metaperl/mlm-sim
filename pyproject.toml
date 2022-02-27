@@ -1,0 +1,26 @@
+[build-system]
+requires = [
+    "setuptools >= 42",  # At least v42 of setuptools required!
+    "versioningit ~= 1.0",
+    "wheel"
+]
+build-backend = "setuptools.build_meta"
+
+[tool.versioningit]
+
+[tool.versioningit.vcs]
+# The method key:
+method = "git"  # <- The method name
+
+# Parameters to pass to the method:
+match = ["v*"]
+default-tag = "8.6.7"
+
+[tool.versioningit.next-version]
+method = "null"
+
+[tool.versioningit.format]
+method = "basic"
+distance = "{version}.post{distance}+{vcs}{rev}"
+dirty = "{version}+d{build_date:%Y%m%d}"
+distance-dirty = "{version}.post{distance}+{vcs}{rev}.d{build_date:%Y%m%d}"
