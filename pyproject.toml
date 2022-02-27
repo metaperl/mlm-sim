@@ -13,7 +13,6 @@ build-backend = "setuptools.build_meta"
 method = "git"  # <- The method name
 
 # Parameters to pass to the method:
-match = ["v*"]
 default-tag = "8.6.7"
 
 [tool.versioningit.next-version]
@@ -24,3 +23,7 @@ method = "basic"
 distance = "{version}.post{distance}+{vcs}{rev}"
 dirty = "{version}+d{build_date:%Y%m%d}"
 distance-dirty = "{version}.post{distance}+{vcs}{rev}.d{build_date:%Y%m%d}"
+
+[tool.versioningit.write]
+method = "basic"
+file = "_version.py"
